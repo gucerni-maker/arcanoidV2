@@ -13,6 +13,7 @@ public class gameManager : MonoBehaviour
     public GameObject paletaPlayer;
     public paleta posicionPaleta; //debe tener el mismo nombre que el script para poder referenciar
     public UIDocument uiDocument;
+    public DatosJuego DatosJuego;
     
     private Label scoreText1, vidasRestantes, puntaje, cronometro, nivel, etapa;
     private Label finDelJuego, continuarJuego, sinTiempo, victoria, contador;
@@ -35,6 +36,7 @@ public class gameManager : MonoBehaviour
 
         playerAudio = GetComponent<AudioSource>();
 
+        //instanciamos los labels
         scoreText1 = uiDocument.rootVisualElement.Q<Label>("puntaje");
         vidasRestantes = uiDocument.rootVisualElement.Q<Label>("vidas");
         finDelJuego = uiDocument.rootVisualElement.Q<Label>("gameOver");
@@ -44,11 +46,14 @@ public class gameManager : MonoBehaviour
         victoria = uiDocument.rootVisualElement.Q<Label>("victoria");
         nivel = uiDocument.rootVisualElement.Q<Label>("nivel");
         etapa = uiDocument.rootVisualElement.Q<Label>("etapa");
+        contador = uiDocument.rootVisualElement.Q<Label>("contador");
+
+        //instanciamos los botones
         restartButton = uiDocument.rootVisualElement.Q<Button>("reiniciar");
         iniciar = uiDocument.rootVisualElement.Q<Button>("iniciar");
         siguiente = uiDocument.rootVisualElement.Q<Button>("siguiente");
-        contador = uiDocument.rootVisualElement.Q<Label>("contador");
-
+        
+        //asociamos los botones a su respectiva funcion
         restartButton.clicked += ReloadScene;
         iniciar.clicked += iniciarJuego;
         siguiente.clicked += siguienteScene;
@@ -60,14 +65,30 @@ public class gameManager : MonoBehaviour
         victoria.style.display = DisplayStyle.None;
         restartButton.style.display = DisplayStyle.None;
         siguiente.style.display = DisplayStyle.None;
+        paletaPlayer.gameObject.SetActive(false);
+        contador.style.display = DisplayStyle.None;//contador 3, 2, 1
 
-        //contador 3, 2, 1
-        contador.style.display = DisplayStyle.None;
+        //Obtenemos el puntaje del almacenamiento
+        scoreText1.text = DatosJuego.Instance.puntaje1.ToString();
+
+        //Obtenemos las vidas restantes del almacenamiento
+        vidasRestantes.text = DatosJuego.Instance.vidas.ToString();
+
+        //modifica el texto de Nivel y etapa al inicio del juego
+        if(SceneManager.GetActiveScene().buildIndex == 0){
+            etapa.text = "Nivel 1";
+            nivel.text = "1";
+        }
+        if(SceneManager.GetActiveScene().buildIndex == 1){
+            etapa.text = "Nivel 2";
+            nivel.text = "2";
+        }
         
     }
 
     void Update()
     {
+        //permite continuar el juego, luego de perder 1 vida presiando la barra de espacio
          if (esperandoInput && Input.GetKeyDown(KeyCode.Space) && cantidadVidas > 0){
             SpawnPelota();
             esperandoInput = false;
@@ -77,9 +98,6 @@ public class gameManager : MonoBehaviour
         //############## PARA EL CRONOMETRO ################
         if (timerActivo && cantidadVidas > 0)
         {
-            
-            
-
             // Actualizar el texto en pantalla
             if (pelotaActual != null){
                 tiempoRestante -= Time.deltaTime;
@@ -100,14 +118,16 @@ public class gameManager : MonoBehaviour
 
     }
 
-    //Oculta el boton de inicio y llama a una cuenta regresiva antes de iniciar
+    //Inicia la corutina para el cronometro y oculta el boton de inicio
     public void iniciarJuego(){
+        //al presionar el boton iniciar, se oculta el boton
         iniciar.style.display = DisplayStyle.None;
         StartCoroutine(CuentaRegresiva());
-       
     }
+
     //Crea una cuenta regresiva y luego inicia la partida
     IEnumerator CuentaRegresiva(){
+        paletaPlayer.gameObject.SetActive(true);
         contador.style.display = DisplayStyle.Flex;
         contador.text = "3";
         CreaLadrillo();
@@ -123,7 +143,9 @@ public class gameManager : MonoBehaviour
         contador.text = "Ya!";
         yield return new WaitForSeconds(1);
 
+        //Oculta el contador luego de llegar a cero
         contador.style.display = DisplayStyle.None;
+        //Oculta el mensaje Nivel # que se muestra antes de iniciar el juego
         etapa.style.display = DisplayStyle.None;
         
         SpawnPelota();
@@ -132,13 +154,14 @@ public class gameManager : MonoBehaviour
     //########  PARA MANEJAR LA CANTIDAD DE VIDAS ##########
     public void PelotaPerdida(){
         esperandoInput = true;
-        cantidadVidas--;
-        vidasRestantes.text = cantidadVidas.ToString();
+        //cantidadVidas--;
+        DatosJuego.Instance.vidas--;
+        vidasRestantes.text = DatosJuego.Instance.vidas.ToString();
         
-        if(cantidadVidas < 1){
+        if(DatosJuego.Instance.vidas < 1){
             GameOver();
         }
-        if(cantidadVidas > 0){
+        if(DatosJuego.Instance.vidas > 0){
             continuarJuego.style.display = DisplayStyle.Flex;
         }
     }
@@ -204,19 +227,19 @@ public class gameManager : MonoBehaviour
         //Reproduce un sonido
         playerAudio.PlayOneShot(sonidoLadrillo, 1.0f);
         
-        //Agregar un puntaje a la variable  
-        puntajeTotal += 10;
+        //Agregar un puntaje a la variable
+        DatosJuego.Instance.puntaje1+=10;//se agrega punto de gol al storage  
 
         //Actualiza el puntaje en la UI
-        scoreText1.text = puntajeTotal.ToString();
+        scoreText1.text = DatosJuego.Instance.puntaje1.ToString();
         
         //Si la cantidad de ladrillos es cero y la escena es cero, se pasa al otro nivel
-        if(cuentaLadrillos == 0 && escena == 0){
+        if(cuentaLadrillos == 16 && escena == 0){
             SiguienteNivel();
         }
 
         //si la cantidad de ladrillos es cero y la escena es uno, se gana
-        if(cuentaLadrillos == 0 && escena == 1){
+        if(cuentaLadrillos == 16 && escena == 1){
             Victoria();
         }
     }
@@ -224,8 +247,8 @@ public class gameManager : MonoBehaviour
         int escena = SceneManager.GetActiveScene().buildIndex;
         cuentaLadrillos--;
         playerAudio.PlayOneShot(sonidoLadrillo, 1.0f);
-        puntajeTotal +=  20;
-        scoreText1.text = puntajeTotal.ToString();
+        DatosJuego.Instance.puntaje1 +=  20;
+        scoreText1.text = DatosJuego.Instance.puntaje1.ToString();
 
         if(cuentaLadrillos == 0 && escena == 0){
             SiguienteNivel();
@@ -239,8 +262,8 @@ public class gameManager : MonoBehaviour
         int escena = SceneManager.GetActiveScene().buildIndex;
         cuentaLadrillos--;
         playerAudio.PlayOneShot(sonidoLadrillo, 1.0f);
-        puntajeTotal +=  30;
-        scoreText1.text = puntajeTotal.ToString();
+        DatosJuego.Instance.puntaje1 +=  30;
+        scoreText1.text = DatosJuego.Instance.puntaje1.ToString();
 
         if(cuentaLadrillos == 0 && escena == 0){
             SiguienteNivel();
@@ -255,27 +278,20 @@ public class gameManager : MonoBehaviour
 
     //###########  PASAR AL SIGUIENTE NIVEL ################
     public void SiguienteNivel(){
-        
-        /*int escena = SceneManager.GetActiveScene().buildIndex;
-        if (escena == 0){
-            DatosJuego.Instance.resultadoSet1P1 = puntoPlayer1;
-            DatosJuego.Instance.resultadoSet1P2 = puntoPlayer2;
-        }
-        if (escena == 1){
-            DatosJuego.Instance.resultadoSet2P1 = puntoPlayer1;
-            DatosJuego.Instance.resultadoSet2P2 = puntoPlayer2;
-        }
-        if (escena == 2){
-            DatosJuego.Instance.resultadoSet3P1 = puntoPlayer1;
-            DatosJuego.Instance.resultadoSet3P2 = puntoPlayer2;
-        }*/
-        
+                
          if (pelotaActual != null){
             Destroy(pelotaActual);
             pelotaActual = null;      
         }
 
+        //muestra el boton "siguiente"
         siguiente.style.display = DisplayStyle.Flex;
+
+        //Mostramos el mensaje de victoria
+        victoria.style.display = DisplayStyle.Flex;
+
+        //ocultamos la paleta antes de iniciar el juego
+        paletaPlayer.gameObject.SetActive(false);
     }
     //######################################################
     
@@ -307,15 +323,8 @@ public class gameManager : MonoBehaviour
 
     //############ Cambia al siguiente nivel ###############
     void siguienteScene(){
-
         int escenaActual = SceneManager.GetActiveScene().buildIndex;
         SceneManager.LoadScene(escenaActual + 1);
-
-        if (escenaActual == 0){
-            etapa.style.display = DisplayStyle.Flex;
-            nivel.text = "2";
-            etapa.text = "Nivel 2";
-        } 
     }
     //######################################################
 }
