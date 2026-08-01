@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;//requerido para usar SceneManager (reiniciar el juego)
 using System.Collections;// requerido para usar IEnumerator
-using UnityEngine.SceneManagement;//requerido para usar SceneManager
 
 public class gameManager : MonoBehaviour
 {
@@ -12,6 +11,7 @@ public class gameManager : MonoBehaviour
     public GameObject bloqueo;//la barra que se mueve en el nivel 2
     public GameObject ladrilloAzul, ladrilloVerde, ladrilloRojo;
     public GameObject paletaPlayer;
+    public GameObject helice1, helice2;
     public paleta posicionPaleta; //debe tener el mismo nombre que el script para poder referenciar
     public UIDocument uiDocument;
     public DatosJuego DatosJuego;
@@ -25,7 +25,6 @@ public class gameManager : MonoBehaviour
     private bool esperandoInput = false;
     private bool timerActivo = true;
     private float tiempoRestante = 120f; //tiempo del cronometro
-    private int puntajeTotal = 0;
     private int cantidadVidas = 3;
     private int cuentaLadrillos = 0;
 
@@ -77,7 +76,7 @@ public class gameManager : MonoBehaviour
         //Obtenemos las vidas restantes del almacenamiento
         vidasRestantes.text = DatosJuego.Instance.vidas.ToString();
 
-        //modifica el texto de Nivel y etapa al inicio del juego
+        //modifica elementos al inicio del juego
         if(SceneManager.GetActiveScene().buildIndex == 0){
             etapa.text = "Nivel 1";
             nivel.text = "1";
@@ -87,6 +86,13 @@ public class gameManager : MonoBehaviour
             nivel.text = "2";
             bloqueo.gameObject.SetActive(false);
         }
+        if(SceneManager.GetActiveScene().buildIndex == 2){
+            etapa.text = "Nivel 3";
+            nivel.text = "3";
+            bloqueo.gameObject.SetActive(false);
+            helice1.gameObject.SetActive(false);
+            helice2.gameObject.SetActive(false);
+        }        
         
     }
 
@@ -137,6 +143,13 @@ public class gameManager : MonoBehaviour
         if(SceneManager.GetActiveScene().buildIndex == 1){
             bloqueo.gameObject.SetActive(true);
         }
+
+        //muestra la barra blanca y las helices en el nivel 3
+        if(SceneManager.GetActiveScene().buildIndex == 2){
+            bloqueo.gameObject.SetActive(true);
+            helice1.gameObject.SetActive(true);
+            helice2.gameObject.SetActive(true);
+        }        
         
         contador.style.display = DisplayStyle.Flex;
         contador.text = "3";
@@ -237,7 +250,18 @@ public class gameManager : MonoBehaviour
             //multiplicamos el largo del arreglo por la cantidad de instancias
             cuentaLadrillos = bloqueNivel2.Length * 4;
         }        
-        
+
+        //Nivel 3
+        if(SceneManager.GetActiveScene().buildIndex == 2){
+            for(int i = 0; i < bloquePosX.Length; i++){
+                Instantiate(ladrilloAzul, new Vector2(bloquePosX[i], 2.14f), Quaternion.identity);
+                Instantiate(ladrilloVerde, new Vector2(bloquePosX[i], 2.88f), Quaternion.identity);
+                Instantiate(ladrilloAzul, new Vector2(bloquePosX[i], 3.62f), Quaternion.identity);
+                Instantiate(ladrilloVerde, new Vector2(bloquePosX[i], 4.36f), Quaternion.identity);
+            }
+            //multiplicamos el largo del arreglo por la cantidad de instancias
+            cuentaLadrillos = bloquePosX.Length * 4;
+        }        
         
     }
     //######################################################
@@ -261,12 +285,16 @@ public class gameManager : MonoBehaviour
         scoreText1.text = DatosJuego.Instance.puntaje1.ToString();
         
         //Si la cantidad de ladrillos es cero y la escena es cero, se pasa al otro nivel
-        if(cuentaLadrillos == 17 && escena == 0){
+        //if(cuentaLadrillos == 0 && escena == 0){
+        if(cuentaLadrillos == 0 && escena == 0){
+            SiguienteNivel();
+        }
+        if(cuentaLadrillos == 0 && escena == 1){
             SiguienteNivel();
         }
 
         //si la cantidad de ladrillos es cero y la escena es uno, se gana
-        if(cuentaLadrillos == 0 && escena == 1){
+        if(cuentaLadrillos == 0 && escena == 2){
             Victoria();
         }
     }
@@ -281,6 +309,9 @@ public class gameManager : MonoBehaviour
             SiguienteNivel();
         }
         if(cuentaLadrillos == 0 && escena == 1){
+            SiguienteNivel();
+        }
+        if(cuentaLadrillos == 0 && escena == 2){
             Victoria();
         }
 
@@ -296,6 +327,9 @@ public class gameManager : MonoBehaviour
             SiguienteNivel();
         }
         if(cuentaLadrillos == 0 && escena == 1){
+            SiguienteNivel();
+        }
+        if(cuentaLadrillos == 0 && escena == 2){
             Victoria();
         }        
     }
