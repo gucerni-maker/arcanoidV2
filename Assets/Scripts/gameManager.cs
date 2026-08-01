@@ -9,6 +9,7 @@ public class gameManager : MonoBehaviour
 
     public AudioClip sonidoLadrillo;//No olvidar agregar un componente Audio Source al prefab del ladrillo (sin ninguna modificacion, es requerido para dar sonido)
     public GameObject pelotaPrefab;
+    public GameObject bloqueo;//la barra que se mueve en el nivel 2
     public GameObject ladrilloAzul, ladrilloVerde, ladrilloRojo;
     public GameObject paletaPlayer;
     public paleta posicionPaleta; //debe tener el mismo nombre que el script para poder referenciar
@@ -29,7 +30,9 @@ public class gameManager : MonoBehaviour
     private int cuentaLadrillos = 0;
 
     
-    private float[] bloquePosX = {-5f, -3f, -1f, 1f, 3f, 5f}; 
+    private float[] bloquePosX = {-5f, -3f, -1f, 1f, 3f, 5f}; //Fila completa
+    private float[] bloqueNivel2 = {-5f, -1f, 3f};//uno si y uno no
+    private float[] bloqueNivel3 = {-3f, 1f, 5f};//uno si y uno no
 
     void Start()
     {
@@ -82,6 +85,7 @@ public class gameManager : MonoBehaviour
         if(SceneManager.GetActiveScene().buildIndex == 1){
             etapa.text = "Nivel 2";
             nivel.text = "2";
+            bloqueo.gameObject.SetActive(false);
         }
         
     }
@@ -128,6 +132,12 @@ public class gameManager : MonoBehaviour
     //Crea una cuenta regresiva y luego inicia la partida
     IEnumerator CuentaRegresiva(){
         paletaPlayer.gameObject.SetActive(true);
+        
+        //muestra la barra blanca que se mueve en el nivel 2
+        if(SceneManager.GetActiveScene().buildIndex == 1){
+            bloqueo.gameObject.SetActive(true);
+        }
+        
         contador.style.display = DisplayStyle.Flex;
         contador.text = "3";
         CreaLadrillo();
@@ -204,14 +214,31 @@ public class gameManager : MonoBehaviour
 
     //###########  PARA LA CREACION DE LADRILLOS ###########
     public void CreaLadrillo(){
-        
-        for(int i = 0; i < bloquePosX.Length; i++){
-            Instantiate(ladrilloAzul, new Vector2(bloquePosX[i], 2.14f), Quaternion.identity);
-            Instantiate(ladrilloVerde, new Vector2(bloquePosX[i], 2.88f), Quaternion.identity);
-            Instantiate(ladrilloRojo, new Vector2(bloquePosX[i], 3.62f), Quaternion.identity);
+
+        //Nivel 1
+        if(SceneManager.GetActiveScene().buildIndex == 0){
+            for(int i = 0; i < bloquePosX.Length; i++){
+                Instantiate(ladrilloAzul, new Vector2(bloquePosX[i], 2.14f), Quaternion.identity);
+                Instantiate(ladrilloVerde, new Vector2(bloquePosX[i], 2.88f), Quaternion.identity);
+                Instantiate(ladrilloRojo, new Vector2(bloquePosX[i], 3.62f), Quaternion.identity);
+            }
+            //multiplicamos el largo del arreglo por la cantidad de instancias
+            cuentaLadrillos = bloquePosX.Length * 3;
         }
-        //multiplicamos el largo del arreglo por la cantidad de instancias
-        cuentaLadrillos = bloquePosX.Length * 3;
+
+        //Nivel 2
+        if(SceneManager.GetActiveScene().buildIndex == 1){
+            for(int i = 0; i < bloqueNivel2.Length; i++){
+                Instantiate(ladrilloAzul, new Vector2(bloqueNivel2[i], 2.14f), Quaternion.identity);
+                Instantiate(ladrilloVerde, new Vector2(bloqueNivel3[i], 2.88f), Quaternion.identity);
+                Instantiate(ladrilloAzul, new Vector2(bloqueNivel2[i], 3.62f), Quaternion.identity);
+                Instantiate(ladrilloVerde, new Vector2(bloqueNivel3[i], 4.36f), Quaternion.identity);
+            }
+            //multiplicamos el largo del arreglo por la cantidad de instancias
+            cuentaLadrillos = bloqueNivel2.Length * 4;
+        }        
+        
+        
     }
     //######################################################
 
@@ -228,18 +255,18 @@ public class gameManager : MonoBehaviour
         playerAudio.PlayOneShot(sonidoLadrillo, 1.0f);
         
         //Agregar un puntaje a la variable
-        DatosJuego.Instance.puntaje1+=10;//se agrega punto de gol al storage  
+        DatosJuego.Instance.puntaje1+=10;//se agregan 10 puntos al storage  
 
         //Actualiza el puntaje en la UI
         scoreText1.text = DatosJuego.Instance.puntaje1.ToString();
         
         //Si la cantidad de ladrillos es cero y la escena es cero, se pasa al otro nivel
-        if(cuentaLadrillos == 16 && escena == 0){
+        if(cuentaLadrillos == 17 && escena == 0){
             SiguienteNivel();
         }
 
         //si la cantidad de ladrillos es cero y la escena es uno, se gana
-        if(cuentaLadrillos == 16 && escena == 1){
+        if(cuentaLadrillos == 0 && escena == 1){
             Victoria();
         }
     }
@@ -274,8 +301,6 @@ public class gameManager : MonoBehaviour
     }
     //######################################################
 
-        //######################################################
-
     //###########  PASAR AL SIGUIENTE NIVEL ################
     public void SiguienteNivel(){
                 
@@ -295,10 +320,24 @@ public class gameManager : MonoBehaviour
     }
     //######################################################
     
-    //reinicia el juego luego de presionar el boton de reiniciar
+    //########### REINICIA EL JUEGO ########################
     void ReloadScene(){
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        SceneManager.LoadScene(0);
+        //SceneManager.LoadScene(SceneManager.GetActiveScene().name);//Recarga la escena actual
+        
+        //Se resetea el puntaje
+        DatosJuego.Instance.puntaje1 = 0;
+
+        //Actualiza el puntaje en la UI
+        scoreText1.text = DatosJuego.Instance.puntaje1.ToString();
+
+        //Se resetean las vidas
+        DatosJuego.Instance.vidas = 3;
+
+        //Actualiza las vidas en la UI
+        vidasRestantes.text = DatosJuego.Instance.vidas.ToString();
     }
+    //######################################################
 
     //########  CONTROLA LA VENTANA DE VICTORIA ############
     public void Victoria(){
