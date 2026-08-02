@@ -297,6 +297,12 @@ public class gameManager : MonoBehaviour
         if(cuentaLadrillos == 0 && escena == 2){
             Victoria();
         }
+
+        //cada 200 puntos damos una vida
+        if(DatosJuego.Instance.puntaje1 % 200 == 0){
+            DatosJuego.Instance.vidas++;
+            vidasRestantes.text = DatosJuego.Instance.vidas.ToString();
+        }
     }
     public void PuntoLadrilloVerde(){
         int escena = SceneManager.GetActiveScene().buildIndex;
@@ -315,6 +321,12 @@ public class gameManager : MonoBehaviour
             Victoria();
         }
 
+        //cada 200 puntos damos una vida
+        if(DatosJuego.Instance.puntaje1 % 200 == 0){
+            DatosJuego.Instance.vidas++;
+            vidasRestantes.text = DatosJuego.Instance.vidas.ToString();
+        }
+
     }
     public void PuntoLadrilloRojo(){
         int escena = SceneManager.GetActiveScene().buildIndex;
@@ -331,7 +343,13 @@ public class gameManager : MonoBehaviour
         }
         if(cuentaLadrillos == 0 && escena == 2){
             Victoria();
-        }        
+        } 
+
+        //cada 200 puntos damos una vida
+        if(DatosJuego.Instance.puntaje1 % 200 == 0){
+            DatosJuego.Instance.vidas++;
+            vidasRestantes.text = DatosJuego.Instance.vidas.ToString();
+        }       
     }
     //######################################################
 
